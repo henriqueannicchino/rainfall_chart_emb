@@ -1,0 +1,24 @@
+.buttons{
+    float: "left";
+    margin-left: "5%";
+}
+
+.container{
+	width: 768px;
+    margin: 0 auto;
+}
+
+.table{
+	border-collapse: collapse;
+	width: 100%;
+	background-color: rgba(75, 192, 192, 0.6);
+}
+
+.table, th, td{
+	border: 1px solid lightgray;
+	padding: 10px;
+}
+
+.table th{
+	height: 25px;
+}
