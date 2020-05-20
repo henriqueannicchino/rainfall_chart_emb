@@ -4,8 +4,10 @@
 }
 
 .container{
-	width: 768px;
-    margin: 0 auto;
+	width: 355px;
+	height: 405px;
+	margin: 0 auto;
+	overflow-y: auto;
 }
 
 .table{
@@ -16,9 +18,9 @@
 
 .table, th, td{
 	border: 1px solid lightgray;
-	padding: 10px;
+	padding: 3px;
 }
 
 .table th{
-	height: 25px;
+	height: 5px;
 }
