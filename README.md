@@ -1,3 +1,5 @@
+When you download this code you first need to run the command 'npm install' to install all the essential packages then you run the command 'npm start' and the project will open on the port 3000 in your localhost
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
