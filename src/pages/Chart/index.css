@@ -4,10 +4,10 @@
 }
 
 .container{
-	width: 355px;
-	height: 405px;
-	margin: 0 auto;
-	overflow-y: auto;
+	width: 60%;
+	/*height: 405px;*/
+	margin: 40px auto;
+	/*overflow-y: auto;*/
 }
 
 .table{

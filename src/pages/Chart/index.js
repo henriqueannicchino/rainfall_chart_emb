@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 //import { format,addHours } from 'date-fns'
-import { Line } from 'react-chartjs-2';
+import { Line, Bar } from 'react-chartjs-2';
 import * as ReactBootStrap from "react-bootstrap";
-import { Form, FormGroup, Label, Input, Button} from 'reactstrap';
+import { Form, FormGroup, Label, Button} from 'reactstrap';
+import NumberFormat from 'react-number-format';
 import './index.css';
 
 //import Header from '../../components/Header';
@@ -25,6 +26,9 @@ export default function Chart() {
 		VRow: [], VRow2: [], VRow3: [], VRow4: []
 	});
 	var [displayX, setDisplayX] = useState(false);
+	var [ehAno, setEhAno] = useState(false);
+	var [ehMaiorQAno, setEhMaiorQAno] = useState(false);
+	var [sizeTable2, setSizeTable2] = useState(0);
 	const [periodo, setPeriodo] = useState('dia');
 	var [data, setData] = useState({
 		x: [], y: [],
@@ -68,8 +72,10 @@ export default function Chart() {
 			var xdata2=[], ydata2=[], Vdata2=[], final=[];
 			var xdata3=[], ydata3=[], Vdata3=[], xdata4=[], ydata4=[], Vdata4=[];
 			ydata2[0]=0; ydata3[0]=0;
-			var xdata3=[], ydata3=[], Vdata3=[], count3=0, tempMes;
+			var count3=0, tempMes,tamanho,count4=0;
 			setDisplayX(true);
+			setEhMaiorQAno(false);
+			setEhAno(false);
 			await registros.Precipitacao.map((registro) => {
 				xdata.push(registro.data);
 				ydata.push(registro.precipitacao);
@@ -134,7 +140,7 @@ export default function Chart() {
 					x4: [], y4: []
 				});
 				setLabelx({
-					l1: 'Hora', l2: '',
+					l1: 'HORA', l2: '',
 					l3: '', l4: ''
 				});
 				setGrafico({
@@ -147,23 +153,28 @@ export default function Chart() {
 			}
 			else if (periodo === 'ano' || (mesesCount > 3 && mesesCount < 13)) {
 				//tratamento para os dados do ano e para periodos entre 4 e 12 meses
-				final[0]=0;final[1]=0;count2=0;ydata2[0]=0;ydata3[0]=0;
+				final[0]=0;final[1]=0;count2=0;ydata2[0]=0;ydata3[0]=0;ydata4[0]=0;
 				if(xdata[0]){
 					count = 0;
 					X = JSON.stringify(xdata[0]);
-					xdata2[0] = X.slice(9,11) + X.slice(5,9) + X.slice(1,5);
-					xdata3[0] = X.slice(9,11) + X.slice(5,9) + X.slice(1,5);
+					xdata2[0] = xdata3[0] = xdata4[0] = X.slice(9,11) + X.slice(5,9) + X.slice(1,5);
 					tempMes = X.slice(6,8);
+					var countMes=0;
 					
 					while(count < xdata.length){
 						X = JSON.stringify(xdata[count]);
 						xdata[count] = X.slice(9,11) + X.slice(5,9) + X.slice(1,5);
 						ydata2[count2] += ydata[count];
+						ydata4[count4] += ydata[count];
 						if(tempMes!==X.slice(6,8)){
 							tempMes=X.slice(6,8);
-							xdata3[count3] = xdata3[count3] + " a " + xdata[count-1];
+							if(count-1>=0)
+								xdata3[count3] = xdata3[count3] + " a " + xdata[count-1];
+							else
+								xdata3[count3] = xdata3[count3] + " a " + xdata[count];
+							xdata3[count3] = await ConverterParaMes(xdata3[count3]);
 							Vdata3[count3] = {data: xdata3[count3], precipitacao: ydata3[count3]};
-							count3++;
+							count3++;countMes++;
 							xdata3[count3] = xdata[count];
 							ydata3[count3]=0;
 						}
@@ -182,6 +193,18 @@ export default function Chart() {
 							}
 						}
 
+						if(countMes===3){
+							if(count-1>=0)
+								xdata4[count4] = xdata4[count4] + " a " + xdata[count-1];
+							else
+								xdata4[count4] = xdata4[count4] + " a " + xdata[count];
+							xdata4[count4] = await ConverterParaTrimestre(xdata4[count4]);
+							Vdata4[count4] = {data: xdata4[count4], precipitacao: ydata4[count4]};
+							count4++;countMes=0;
+							xdata4[count4] = xdata[count];
+							ydata4[count4]=0;
+						}
+
 						count++;
 					}
 					if(!final[0]){
@@ -189,24 +212,31 @@ export default function Chart() {
 						Vdata2[count2] = {data: xdata2[count2], precipitacao: ydata2[count2]};
 					}
 					xdata3[count3] = xdata3[count3] + " a " + xdata[count-1];
+					xdata3[count3] = await ConverterParaMes(xdata3[count3]);
 					Vdata3[count3] = {data: xdata3[count3], precipitacao: ydata3[count3]};
-				} 
+
+					xdata4[count4] = xdata4[count4] + " a " + xdata[count-1];
+					xdata4[count4] = await ConverterParaTrimestre(xdata4[count4]);
+					Vdata4[count4] = {data: xdata4[count4], precipitacao: ydata4[count4]};
+				}
+				
+				setEhAno(true);
 				setData({
 					x: xdata2, y: ydata2,
 					x2: xdata3, y2: ydata3,
-					x3: [], y3: [],
+					x3: xdata4, y3: ydata4,
 					x4: [], y4: []
-				})
+				});
 				setLabelx({
-					l1: 'Quinzena', l2: 'Mês',
-					l3: '', l4: ''
+					l1: 'QUINZENA', l2: 'MÊS',
+					l3: 'TRIMESTRE', l4: ''
 				});
 				setGrafico({
-					g2: 'block', g3: 'none', g4: 'none'
+					g2: 'block', g3: 'block', g4: 'none'
 				});
 				setRows({
 					VRow: Vdata2, VRow2: Vdata3,
-					VRow3: [], VRow4: []
+					VRow3: Vdata4, VRow4: []
 				})
 			}
 			else{
@@ -234,7 +264,7 @@ export default function Chart() {
 						/*xdata2=[], ydata2=[], Vdata2=[] guarda a soma semanal*/
 						/*xdata3=[], ydata3=[], Vdata3=[], tempMes; guarda a soma quinzenal*/
 						/*xdata4=[], ydata4=[], Vdata4=[], //guarda a soma mensal*/
-						var tamanho=xdata.length, count4=0; final[0]=0;final[1]=0;final[2]=0; ydata4[0]=0;
+					    count4=0;final[0]=0;final[1]=0;final[2]=0; ydata4[0]=0;tamanho=xdata.length;
 						xdata2[0]=xdata[0]; xdata3[0]=xdata[0]; xdata4[0]=xdata[0];ydata3[0]=0;
 						tempMes=parseInt(xdata[0][3]) * 10 + parseInt(xdata[0][4]);
 						while(count < tamanho){
@@ -266,6 +296,7 @@ export default function Chart() {
 							if(tempMes!==parseInt(xdata[count][3]) * 10 + parseInt(xdata[count][4])){
 								tempMes=parseInt(xdata[count][3]) * 10 + parseInt(xdata[count][4]);
 								xdata4[count4] = xdata4[count4] + " a " + xdata[count-1];
+								xdata4[count4] = await ConverterParaMes(xdata4[count4]);
 								Vdata4[count4] = {data: xdata4[count4], precipitacao: ydata4[count4]};
 								
 								xdata4[count4+1] = xdata[count];
@@ -285,12 +316,16 @@ export default function Chart() {
 									Vdata3[count3] = {data: xdata3[count3], precipitacao: ydata3[count3]};
 								}
 								xdata4[count4] = xdata4[count4] + " a " + xdata[count-1];
+								xdata4[count4] = await ConverterParaMes(xdata4[count4]);
 								Vdata4[count4] = {data: xdata4[count4], precipitacao: ydata4[count4]};
 							}
 						}
+						count=xdata.length +1;
+						count=count*25.32;
+						setSizeTable2(count);
 						setLabelx({
-							l1: 'Data', l2: 'Semana',
-							l3: 'Quinzena', l4: 'Mês'
+							l1: 'DIA', l2: 'SEMANA',
+							l3: 'QUINZENA', l4: 'MÊS'
 						});
 						setGrafico({
 							g2: 'block', g3: 'block', g4: 'block'
@@ -308,7 +343,7 @@ export default function Chart() {
 							VRow4: Vdata4
 						})
 					}
-					else if(mesesCount > 12){
+					else if(mesesCount > 12){ //period bigger than a year
 						count2 = xdata.length -1;
 						while(count < xdata.length/2){
 							X = JSON.stringify(xdata[count]);
@@ -326,7 +361,7 @@ export default function Chart() {
 
 						count2=0;count=0;ydata3[0]=0;
 						xdata2[0]=xdata[0]; xdata3[0]=xdata[0];
-						var tamanho=xdata.length;
+						tamanho=xdata.length;
 						final[0]=0;final[1]=0;
 						while(count < tamanho){
 							ydata2[count2] = ydata2[count2] + ydata[count];
@@ -384,6 +419,7 @@ export default function Chart() {
 							VRow3: Vdata3,
 							VRow4: []
 						})
+						setEhMaiorQAno(true);
 					}
 					else{
 						setLabelx({
@@ -416,6 +452,71 @@ export default function Chart() {
 			}
 		}
 
+		async function ConverterParaMes(periodoDoMes){
+			var tempMesPeriodo = periodoDoMes.slice(3,5)
+			if(tempMesPeriodo==='01' || tempMesPeriodo==='03' || tempMesPeriodo==='05' || tempMesPeriodo==='07' || tempMesPeriodo==='08' || tempMesPeriodo==='10' || tempMesPeriodo==='12'){
+				if(periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='31')
+					return periodoDoMes.slice(3,10);
+				else
+					return periodoDoMes;	
+			} 
+			else if(tempMesPeriodo==='04' || tempMesPeriodo==='06' || tempMesPeriodo==='09' || tempMesPeriodo==='11'){
+				if(periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='30')
+					return periodoDoMes.slice(3,10);
+				else
+					return periodoDoMes;
+			}
+			else{
+				var tempAnoPeriodo = parseInt(periodoDoMes.slice(6,10));
+				if((tempAnoPeriodo%4===0 && tempAnoPeriodo%100!==0) || tempAnoPeriodo%400===0){
+					if(periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='29')
+						return periodoDoMes.slice(3,10);
+					else
+						return periodoDoMes;
+				}
+				else{
+					if(periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='28')
+						return periodoDoMes.slice(3,10);
+					else
+						return periodoDoMes;
+				}
+			}
+		}
+
+		async function ConverterParaTrimestre(periodoDoMes){
+			var tempMesPeriodo1 = parseInt(periodoDoMes.slice(3,5)), tempMesPeriodo2 = parseInt(periodoDoMes.slice(16,18));
+			if(tempMesPeriodo1 > tempMesPeriodo2)
+				tempMesPeriodo2+=12; 
+			
+			if(tempMesPeriodo2===1 || tempMesPeriodo2===3 || tempMesPeriodo2===5 || tempMesPeriodo2===7 || tempMesPeriodo2===8 || tempMesPeriodo2===10 || tempMesPeriodo2===12){
+				if(tempMesPeriodo2-tempMesPeriodo1===2 && (periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='31'))
+					return periodoDoMes.slice(3,13) + periodoDoMes.slice(16,23);
+				else
+					return periodoDoMes;	
+			} 
+			else if(tempMesPeriodo2===4 || tempMesPeriodo2===6 || tempMesPeriodo2===9 || tempMesPeriodo2===11){ 
+				if(tempMesPeriodo2-tempMesPeriodo1===2 && (periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='30'))
+					return periodoDoMes.slice(3,13) + periodoDoMes.slice(16,23);
+				else
+					return periodoDoMes;	
+			} 
+			else{
+				var tempAnoPeriodo = parseInt(periodoDoMes.slice(19,23));
+				if((tempAnoPeriodo%4===0 && tempAnoPeriodo%100!==0) || tempAnoPeriodo%400===0){
+					if(tempMesPeriodo2-tempMesPeriodo1===2 && (periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='29'))
+						return periodoDoMes.slice(3,13) + periodoDoMes.slice(16,23);
+					else
+						return periodoDoMes;
+				}
+				else{
+					if(tempMesPeriodo2-tempMesPeriodo1===2 && (periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='28'))
+						return periodoDoMes.slice(3,13) + periodoDoMes.slice(16,23);
+					else
+						return periodoDoMes;
+				}
+			}
+		}
+
 		if (registros) {
 			//console.log('Tem registros então vou montar o gráfico')
 			PrepararDados();
@@ -434,9 +535,9 @@ export default function Chart() {
 					{
 						label: 'Precipitação (mm)',
 						data: data.y,
-						backgroundColor: [
-							'rgba(75, 192, 192, 0.6)'
-						],
+						//backgroundColor: ['rgba(75, 192, 192, 0.6)',], seta a cor um por um
+						backgroundColor: 'rgba(75, 192, 192, 0.6)', //colore todos 
+						borderColor: 'rgb(255, 51, 51)',
 						borderWidth: 4
 					}
 				]
@@ -453,9 +554,8 @@ export default function Chart() {
 					{
 						label: 'Precipitação (mm)',
 						data: data.y2,
-						backgroundColor: [
-							'rgba(75, 192, 192, 0.6)'
-						],
+						backgroundColor: 'rgba(75, 192, 192, 0.6)',
+						borderColor: 'rgb(255, 51, 51)',
 						borderWidth: 4
 					}
 				]
@@ -471,9 +571,8 @@ export default function Chart() {
 					{
 						label: 'Precipitação (mm)',
 						data: data.y3,
-						backgroundColor: [
-							'rgba(75, 192, 192, 0.6)'
-						],
+						backgroundColor: 'rgba(75, 192, 192, 0.6)',
+						borderColor: 'rgb(255, 51, 51)',
 						borderWidth: 4
 					}
 				]
@@ -489,9 +588,8 @@ export default function Chart() {
 					{
 						label: 'Precipitação (mm)',
 						data: data.y4,
-						backgroundColor: [
-							'rgba(75, 192, 192, 0.6)'
-						],
+						backgroundColor: 'rgba(75, 192, 192, 0.6)',
+						borderColor: 'rgb(255, 51, 51)',
 						borderWidth: 4
 					}
 				]
@@ -507,7 +605,13 @@ export default function Chart() {
 		//console.log(rows.VRow);
 		return(
 			<tr key={index}>
-				<td>{Data.data}</td>
+				{Data.data.length > 13 && Data.data.length < 18 ? 
+					<td>{Data.data.slice(0,10)} <br></br> {Data.data.slice(10,17)}</td> 
+					:
+					Data.data.length > 18 ?
+						<td>{Data.data.slice(0,12)} <br></br> {Data.data.slice(12,23)}</td> 
+						:
+						<td>{Data.data}</td>}
 				<td>{Data.precipitacao}</td>
 			</tr>
 		)
@@ -515,22 +619,18 @@ export default function Chart() {
 
 	function preparaPeriodo(){
 		//console.log(typeof(BEperiodo.inicio + BEperiodo.fim));
-		if(BEperiodo.inicio.length === 8 && BEperiodo.fim.length === 8){
+		if(BEperiodo.inicio.length === 10 && BEperiodo.fim.length === 10){
 			var tempPeriodo = [], error=0;
-			var count = 0;
-			while(count < 8){
-				tempPeriodo[count] = parseInt(BEperiodo.inicio[count]);
-				tempPeriodo[count + 8] = parseInt(BEperiodo.fim[count]);
-				count++;
-				/*if(isNaN(tempPeriodo[count2])===false && isNaN(tempPeriodo[count2 + 8])===false){
+			var count = 0, count2 = 0;
+			//Remove slashe and join the beginning period and the ending period in a array called tempPeriodo
+			while(count < 10){
+				if(isNaN(parseInt(BEperiodo.inicio[count]))===true && isNaN(parseInt(BEperiodo.fim[count]))===true){
 					count++;
-					count2++;
 				}
-				else{
-					error=1;
-					alert("data invalida");
-					break;
-				}*/
+				tempPeriodo[count2] = parseInt(BEperiodo.inicio[count]);
+				tempPeriodo[count2 + 8] = parseInt(BEperiodo.fim[count]);
+				count++;
+				count2++;
 			}
 			if(error===0){
 				tempPeriodo[0]=tempPeriodo[0] * 10 + tempPeriodo[1];
@@ -636,10 +736,10 @@ export default function Chart() {
 			}
 		}
 		else{
-			alert("Por Favor insira um periodo nesse formato inicio(ddmmyyyy) e fim(ddmmyyyy)");
+			alert("Por Favor insira um periodo nesse formato inicio(DD/MM/YYYY) e fim(DD/MM/YYYY)");
 		}
 	}
-
+	/*<Input type="text" value={BEperiodo.inicio} id="Periodo_inicial" onChange={e => setBEperiodo({ ...BEperiodo, inicio: e.target.value })} placeholder="ddmmyyyy" />*/
 	return (
 		//style={{height: "500px", width: "500px"}}
 		<div className="App">
@@ -660,15 +760,18 @@ export default function Chart() {
 					<Form>
 						<FormGroup>
 							<Label for="Periodo_inicial">Inicio</Label>
-							<Input type="text" value={BEperiodo.inicio} id="Periodo_inicial" onChange={e => setBEperiodo({ ...BEperiodo, inicio: e.target.value })} placeholder="ddmmyyyy" />
+							<NumberFormat type="text" value={BEperiodo.inicio} id="Periodo_inicial" onChange={e => setBEperiodo({ ...BEperiodo, inicio: e.target.value })}	
+								format="##/##/####" placeholder="DD/MM/YYYY" mask={['D','D','M', 'M', 'Y', 'Y','Y','Y']}/>
 							<Label for="Periodo_final">Fim</Label>
-							<Input type="text" value={BEperiodo.fim} id="Periodo_final" onChange={e => setBEperiodo({ ...BEperiodo, fim: e.target.value })} placeholder="ddmmyyyy" />
+							<NumberFormat type="text" value={BEperiodo.fim} id="Periodo_final" onChange={e => setBEperiodo({ ...BEperiodo, fim: e.target.value })}	
+								format="##/##/####" placeholder="DD/MM/YYYY" mask={['D','D','M', 'M', 'Y', 'Y','Y','Y']}/>
 							<Button color="primary" block onClick={preparaPeriodo}> Pesquisar </Button>
 						</FormGroup>
 					</Form>
 				</div>
 
-				<div style={{float: "left", width: grafico.g2 === "none" ? "100%" : "50%"}}>
+				<div style={{width: "50%", margin: grafico.g2 === "none" ? "0 auto" : "", 
+						float: grafico.g2 === "none" ? "" : "left"}}>
 					{registros ?
 						<Line data={chartData} options={{
 							responsive: true,
@@ -696,6 +799,12 @@ export default function Chart() {
 											display: false
 										},
 										ticks: {
+											callback(value, index) {
+												if (ehAno)
+													return index+1+'ª';
+												else		
+													return value;
+											},
 											display: displayX
 										},
 										scaleLabel: {
@@ -716,7 +825,7 @@ export default function Chart() {
 								<thead>
 									<tr>
 										<th style={{width: 125 }}>{labelx.l1}</th>
-										<th style={{width: 125 }}>Precipitação</th>
+										<th style={{width: 125 }}>PRECIPITAÇÃO</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -774,12 +883,12 @@ export default function Chart() {
 					}
 
 					{registros ?
-						<div className="container" style={{display: grafico.g2}}>
+						<div className="container" style={{display: grafico.g2, height: sizeTable2+"px"}}>
 							<ReactBootStrap.Table striped bordered hover>
 								<thead>
 									<tr>
 										<th style={{width: 125 }}>{labelx.l2}</th>
-										<th style={{width: 125 }}>Precipitação</th>
+										<th style={{width: 125 }}>PRECIPITAÇÃO</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -793,8 +902,9 @@ export default function Chart() {
 
 				</div>
 
-				<div style={{float: "left", width: "50%",marginTop: "40px"}}>
-					{registros && grafico.g3!=="none" ?
+				<div style={{width: "50%",marginTop: "40px", margin: grafico.g4 === "none" ? "0 auto" : "", 
+						float: grafico.g4 === "none" ? "" : "left"}}>
+					{registros && grafico.g3!=="none" &&  ehMaiorQAno===false ?
 						<Line data={chartData3} options={{
 							responsive: true,
 							title: { text: 'Precipitação', display: false },
@@ -832,8 +942,45 @@ export default function Chart() {
 							}
 						}} />
 						:
-						<p></p>
-
+						registros && grafico.g3!=="none" &&  ehMaiorQAno===true ?
+							<Bar data={chartData3} options={{
+								responsive: true,
+								title: { text: 'Precipitação', display: false },
+								scales: {
+									yAxes: [
+										{
+											ticks: {
+												autoSkip: true,
+												maxTicksLimit: 10,
+												beginAtZero: true
+											},
+											gridLines: {
+												display: false
+											},
+											scaleLabel: {
+												labelString: "Precipitação (mm)",
+												display: true
+											}
+										}
+									],
+									xAxes: [
+										{
+											gridLines: {
+												display: false
+											},
+											ticks: {
+												display: displayX
+											},
+											scaleLabel: {
+												labelString: labelx.l3,
+												display: true
+											}
+										}
+									]
+								}
+							}} />
+							:
+							<p></p>
 					}
 
 					{registros ?
@@ -842,7 +989,7 @@ export default function Chart() {
 								<thead>
 									<tr>
 										<th style={{width: 125 }}>{labelx.l3}</th>
-										<th style={{width: 125 }}>Precipitação</th>
+										<th style={{width: 125 }}>PRECIPITAÇÃO</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -856,7 +1003,7 @@ export default function Chart() {
 
 				</div>
 
-				<div style={{float: "left", width: "50%",marginTop: "40px"}}>
+				<div style={{float: "left", width: "50%",marginTop: "0px"}}>
 					{registros && grafico.g4!=="none" ?
 						<Line data={chartData4} options={{
 							responsive: true,
@@ -905,7 +1052,7 @@ export default function Chart() {
 								<thead>
 									<tr>
 										<th style={{width: 125 }}>{labelx.l4}</th>
-										<th style={{width: 125 }}>Precipitação</th>
+										<th style={{width: 125 }}>PRECIPITAÇÃO</th>
 									</tr>
 								</thead>
 								<tbody>
