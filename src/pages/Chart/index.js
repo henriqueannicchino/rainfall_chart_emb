@@ -1,11 +1,3 @@
-//no grafico de 15 dias tirar o ano deve ficar assim no eixoX 01-05
-//na legenda do grafico do mes parte de 4 meses a 1 ano mudar 01-06 para JUN e
-//caso seja data quebrada colocar assim 01-05 a 30-05
-//arrumar o problema do ano quase completo exemplo 09-06-2018 a 02-06-2019 nao eh ano mais
-//q um ano tá reconhecendo como mais de ano
-//colocar a caixa do total no meio acima das tabelas e abaixo dos graficos "tentar usar absolute"
-//caso não dê certo colocar colocar em cima
-
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
