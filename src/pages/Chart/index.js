@@ -28,7 +28,7 @@ export default function Chart() {
 		VRow: [], VRow2: [], VRow3: [], VRow4: []
 	});
 	var [totalGrafico, setTotalGrafico] = useState();
-	var [displayX, setDisplayX] = useState(false);
+	/*var [displayX, setDisplayX] = useState(false);*/
 	var [ehAno, setEhAno] = useState(false);
 	var [ehMes, setEhMes] = useState(false);
 	var [ehMaiorQAno, setEhMaiorQAno] = useState(false);
@@ -53,7 +53,7 @@ export default function Chart() {
 		async function LoadData() {
 			setRegistros();
 			//console.log('Inicio da função para pegar os dados do back')
-			let response = await axios.get(`http://localhost:5000/dados_${periodo === 'dia'|| periodo === 'hoje' ? 'da_' : ''}precipitacao?periodo=${periodo}`)
+			let response = await axios.get(`http://localhost:5000/dados_${periodo === 'dia'|| periodo === 'hoje' ? 'da_' : ''}precipitacao?periodo=${periodo}&modulo_id=1`)
 				.then(res => {
 					//console.log('Back retornou uma resposta')
 					return res.data;
@@ -73,12 +73,12 @@ export default function Chart() {
 	useEffect(() => {
 		async function PrepararDados() {
 			var xdata = [], ydata = [], Vdata = [];
-			var count = 0, count2, X, temp, igualBotao=0, mesesCount=0;
+			var count = 0, count2, X, temp, mesesCount=0 /*,igualBotao=0*/;
 			var xdata2=[], ydata2=[], Vdata2=[], final=[];
 			var xdata3=[], ydata3=[], Vdata3=[], xdata4=[], ydata4=[], Vdata4=[];
 			ydata2[0]=0; ydata3[0]=0;
 			var count3=0, tempMes,tamanho,count4=0, precipitacaoTotal;
-			setDisplayX(true);
+			//setDisplayX(true);
 			setEhMaiorQAno(false);
 			setEhAno(false);
 			setEhMenorQAno(false);
@@ -90,7 +90,7 @@ export default function Chart() {
 			})
 			if(xdata.length===0) 
 				setRegistros();
-			igualBotao=registros.IgualBotao;
+			//igualBotao=registros.IgualBotao;
 			mesesCount=registros.MesesCount;
 			if (periodo === 'dia' || periodo === 'hoje') {
 				//soma os dados 6 a 6 se for dia
@@ -109,8 +109,14 @@ export default function Chart() {
 					while(count < xdata.length/2){
 						X = JSON.stringify(xdata[count]);
 						temp = JSON.stringify(xdata[count2]);
-						xdata[count] = temp.slice(12,17);
-						xdata[count2] = X.slice(12,17);
+						if(temp[15]==='0' && temp[16]==='0')
+							xdata[count] = temp.slice(12,14)+'h';
+						else
+							xdata[count] = temp.slice(12,17);
+						if(X[15]==='0' && X[16]==='0')
+							xdata[count2] = X.slice(12,14)+'h';
+						else
+							xdata[count2] = X.slice(12,17);
 						temp = ydata[count2];
 						ydata[count2] = ydata[count];
 						ydata[count] = temp;
@@ -310,7 +316,7 @@ export default function Chart() {
 						/*xdata3=[], ydata3=[], Vdata3=[], tempMes; guarda a soma quinzenal*/
 						/*xdata4=[], ydata4=[], Vdata4=[], //guarda a soma mensal*/
 					    count4=0;final[0]=0;final[1]=0;final[2]=0; ydata4[0]=0;tamanho=xdata.length;
-						xdata2[0]=xdata[0]; xdata3[0]=xdata[0]; xdata4[0]=xdata[0];ydata3[0]=0;
+						xdata2[0]=xdata[0]; xdata3[0]=xdata[0]; /*xdata4[0]=xdata[0];*/ydata3[0]=0;
 						tempMes=parseInt(xdata[0][3]) * 10 + parseInt(xdata[0][4]);
 						while(count < tamanho){
 							ydata2[count2] = ydata2[count2] + ydata[count];
@@ -340,7 +346,7 @@ export default function Chart() {
 									final[1]=1;
 								}
 							}
-							if(tempMes!==parseInt(xdata[count][3]) * 10 + parseInt(xdata[count][4])){
+							/*if(tempMes!==parseInt(xdata[count][3]) * 10 + parseInt(xdata[count][4])){
 								tempMes=parseInt(xdata[count][3]) * 10 + parseInt(xdata[count][4]);
 								xdata4[count4] = xdata4[count4] + " a " + xdata[count-1];
 								xdata4[count4] = await ConverterParaMes(xdata4[count4]);
@@ -351,7 +357,7 @@ export default function Chart() {
 								count4++;
 								ydata4[count4]=0;
 							}
-							ydata4[count4] = ydata4[count4] + ydata[count];				
+							ydata4[count4] = ydata4[count4] + ydata[count];	*/			
 
 							count++;
 							if(count === xdata.length){
@@ -365,10 +371,10 @@ export default function Chart() {
 									ydata3[count3] = ydata3[count3].toFixed(1);
 									Vdata3[count3] = {data: xdata3[count3], precipitacao: ydata3[count3]};
 								}
-								xdata4[count4] = xdata4[count4] + " a " + xdata[count-1];
+								/*xdata4[count4] = xdata4[count4] + " a " + xdata[count-1];
 								xdata4[count4] = await ConverterParaMes(xdata4[count4]);
 								ydata4[count4] = ydata4[count4].toFixed(1);
-								Vdata4[count4] = {data: xdata4[count4], precipitacao: ydata4[count4]};
+								Vdata4[count4] = {data: xdata4[count4], precipitacao: ydata4[count4]};*/
 							}
 						}
 
@@ -390,19 +396,19 @@ export default function Chart() {
 							l3: 'QUINZENA', l4: 'MÊS'
 						});
 						setGrafico({
-							g2: 'block', g3: 'block', g4: 'block'
+							g2: 'block', g3: 'block', g4: 'none'
 						});
 						setData({
 							x: xdata, y: ydata,
 							x2: xdata2, y2: ydata2,
 							x3: xdata3, y3: ydata3,
-							x4: xdata4, y4: ydata4
+							x4: [], y4: []
 						});
 						setRows({
 							VRow: Vdata,
 							VRow2: Vdata2,
 							VRow3: Vdata3,
-							VRow4: Vdata4
+							VRow4: []
 						})
 						setPeriodoGrafico(xdata[0] + " a " + xdata[xdata.length-1]);
 						setEhMes(true);
@@ -558,49 +564,26 @@ export default function Chart() {
 					}
 				}
 
-				if(igualBotao){
+				/*if(igualBotao){
 					setDisplayX(true);
 				}else{
 					setDisplayX(false);
-				}
+				}*/
 			}
 		}
 
 		async function ConverterParaMes(periodoDoMes){
-			var tempMesPeriodo = periodoDoMes.slice(3,5)
-			if(tempMesPeriodo==='01' || tempMesPeriodo==='03' || tempMesPeriodo==='05' || tempMesPeriodo==='07' || tempMesPeriodo==='08' || tempMesPeriodo==='10' || tempMesPeriodo==='12'){
+			var tempMesPeriodo = parseInt(periodoDoMes.slice(3,5));
+			var meses=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+			if(tempMesPeriodo===1 || tempMesPeriodo===3 || tempMesPeriodo===5 || tempMesPeriodo===7 || tempMesPeriodo===8 || tempMesPeriodo===10 || tempMesPeriodo===12){
 				if(periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='31')
-					switch(tempMesPeriodo){
-						case '01':
-							return 'JAN';
-						case '03':
-							return 'MAR';
-						case '05':
-							return 'MAIO';
-						case '07':
-							return 'JUL';
-						case '08':
-							return 'AGO';
-						case '10':
-							return 'OUT';
-						case '12':
-							return 'DEZ';
-					}
+					return meses[tempMesPeriodo-1] + periodoDoMes.slice(5,11);
 				else
 					return periodoDoMes.slice(0,5) + periodoDoMes.slice(10,18);	
 			} 
-			else if(tempMesPeriodo==='04' || tempMesPeriodo==='06' || tempMesPeriodo==='09' || tempMesPeriodo==='11'){
+			else if(tempMesPeriodo===4 || tempMesPeriodo===6 || tempMesPeriodo===9 || tempMesPeriodo===11){
 				if(periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='30')
-					switch(tempMesPeriodo){
-						case '04':
-							return 'ABR';
-						case '06':
-							return 'JUN';
-						case '09':
-							return 'SET';
-						case '11':
-							return 'NOV';
-					}
+					return meses[tempMesPeriodo-1] + periodoDoMes.slice(5,11);
 				else
 					return periodoDoMes.slice(0,5) + periodoDoMes.slice(10,18);
 			}
@@ -608,13 +591,13 @@ export default function Chart() {
 				var tempAnoPeriodo = parseInt(periodoDoMes.slice(6,10));
 				if((tempAnoPeriodo%4===0 && tempAnoPeriodo%100!==0) || tempAnoPeriodo%400===0){
 					if(periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='29')
-						return 'FEV';
+						return 'FEV' + periodoDoMes.slice(5,11);
 					else
 						return periodoDoMes.slice(0,5) + periodoDoMes.slice(10,18);
 				}
 				else{
 					if(periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='28')
-						return 'FEV';
+						return 'FEV' + periodoDoMes.slice(5,11);
 					else
 						return periodoDoMes.slice(0,5) + periodoDoMes.slice(10,18);
 				}
@@ -623,7 +606,7 @@ export default function Chart() {
 
 		async function ConverterParaTrimestre(periodoDoMes){
 			var tempMesPeriodo1 = parseInt(periodoDoMes.slice(3,5)), tempMesPeriodo2 = parseInt(periodoDoMes.slice(16,18));
-			var meses=['JAN','FEV','MAR','ABR','MAIO','JUN','JUL','AGO','SET','OUT','NOV','DEZ'],somou=false;
+			var meses=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'],somou=false;
 			if(tempMesPeriodo1 > tempMesPeriodo2){
 				somou=true;
 				tempMesPeriodo2+=12; 
@@ -634,20 +617,20 @@ export default function Chart() {
 					if(somou)
 						tempMesPeriodo2-=12;
 					tempMesPeriodo1 = meses[tempMesPeriodo1-1]; tempMesPeriodo2 = meses[tempMesPeriodo2-1];
-					return tempMesPeriodo1 + ' a ' + tempMesPeriodo2;
+					return tempMesPeriodo1 + periodoDoMes.slice(5,11) + ' a ' + tempMesPeriodo2 + periodoDoMes.slice(18,23);
 				}
 				else
-					return periodoDoMes.slice(0,5) + periodoDoMes.slice(10,18);	
+					return periodoDoMes.slice(0,11) + periodoDoMes.slice(10,23);	
 			} 
 			else if(tempMesPeriodo2===4 || tempMesPeriodo2===6 || tempMesPeriodo2===9 || tempMesPeriodo2===11){ 
 				if(tempMesPeriodo2-tempMesPeriodo1===2 && (periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='30')){
 					if(somou)
 						tempMesPeriodo2-=12;
 					tempMesPeriodo1 = meses[tempMesPeriodo1-1]; tempMesPeriodo2 = meses[tempMesPeriodo2-1];
-					return tempMesPeriodo1 + ' a ' + tempMesPeriodo2;
+					return tempMesPeriodo1 + periodoDoMes.slice(5,11) + ' a ' + tempMesPeriodo2 + periodoDoMes.slice(18,23);
 				}
 				else
-					return periodoDoMes.slice(0,5) + periodoDoMes.slice(10,18);	
+					return periodoDoMes.slice(0,11) + periodoDoMes.slice(10,23);	
 			} 
 			else{
 				var tempAnoPeriodo = parseInt(periodoDoMes.slice(19,23));
@@ -656,20 +639,20 @@ export default function Chart() {
 						if(somou)
 							tempMesPeriodo2-=12;
 						tempMesPeriodo1 = meses[tempMesPeriodo1-1]; tempMesPeriodo2 = meses[tempMesPeriodo2-1];
-						return tempMesPeriodo1 + ' a ' + tempMesPeriodo2;
+						return tempMesPeriodo1 + periodoDoMes.slice(5,11) + ' a ' + tempMesPeriodo2 + periodoDoMes.slice(18,23);
 					}
 					else
-						return periodoDoMes.slice(0,5) + periodoDoMes.slice(10,18);
+						return periodoDoMes.slice(0,11) + periodoDoMes.slice(10,23);
 				}
 				else{
 					if(tempMesPeriodo2-tempMesPeriodo1===2 && (periodoDoMes.slice(0,2)==='01' && periodoDoMes.slice(13,15)==='28')){
 						if(somou)
 							tempMesPeriodo2-=12;
 						tempMesPeriodo1 = meses[tempMesPeriodo1-1]; tempMesPeriodo2 = meses[tempMesPeriodo2-1];
-						return tempMesPeriodo1 + ' a ' + tempMesPeriodo2;
+						return tempMesPeriodo1 + periodoDoMes.slice(5,11) + ' a ' + tempMesPeriodo2 + periodoDoMes.slice(18,23);
 					}
 					else
-						return periodoDoMes.slice(0,5) + periodoDoMes.slice(10,18);
+						return periodoDoMes.slice(0,11) + periodoDoMes.slice(10,23);
 				}
 			}
 		}
@@ -903,7 +886,8 @@ export default function Chart() {
 		<div className="App">
 			
 			<div style={{width: "100%"}}>
-				<h1>Precipitação</h1>
+			<h1>Estação {localStorage.getItem('modulo_id')}</h1>
+			<h2>Precipitação</h2>
 				
 				<div style={{float: "left", 'marginLeft': "5%"}}>
 					<button onClick={() => setPeriodo('hoje')}>hoje</button>
@@ -974,6 +958,9 @@ export default function Chart() {
 													return index+1+'º';
 												else if(ehMenorQAno){
 													return value.slice(0,5);
+												}
+												else if(ehMes){
+													return value.slice(0,5) + value.slice(10,18);
 												}
 												else		
 													return value;
@@ -1049,6 +1036,9 @@ export default function Chart() {
 												else if(ehMes){
 													return value.slice(0,5) + value.slice(10,18);
 												}
+												else if(ehAno){
+													return value.slice(0,3);
+												}
 												else		
 													return value;
 											},
@@ -1121,6 +1111,9 @@ export default function Chart() {
 											callback(value, index) {
 												if (ehMes)
 													return index+1+'ª';
+												else if(ehAno){
+													return value.slice(0,3) + value.slice(8,15);
+												}
 												else		
 													return value;
 											},
